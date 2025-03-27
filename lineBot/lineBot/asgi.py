@@ -11,7 +11,7 @@ import os
 
 from django.apps import apps
 from django.conf import settings
-import settings as lineBot_settings 
+import lineBot.lineBot.settings as lineBot_settings 
 from django.core.asgi import get_asgi_application
 from starlette.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
