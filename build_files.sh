@@ -1,2 +1,2 @@
 pip3 install -r requirements.txt
-python3.9 manage.py collectstatic --noinput
+python ./lineBot/manage.py collectstatic --noinput
