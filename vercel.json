@@ -2,7 +2,7 @@
     "version": 2,
     "builds": [
         {
-            "src": "build_files.sh",
+            "src": "lineBot/asgi.py",
             "use": "@vercel/python"
         }
     ],
@@ -12,6 +12,7 @@
             "dest": "lineBot/asgi.py"
         }
     ],
+    "devCommand": "uvicorn lineBot.asgi:app",
     "env": {
         "APP_MODULE": "lineBot.asgi:app"
     }
