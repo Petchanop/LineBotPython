@@ -1,19 +1,16 @@
 {
     "version": 2,
+    "devCommand": "uvicorn lineBot.asgi:app --host 0.0.0.0 --port 3000",
     "builds": [
         {
-            "src": "lineBot/asgi.py",
+            "src": "linBot/lineBot/asgi.py",
             "use": "@vercel/python"
         }
     ],
     "routes": [
         {
             "src": "/(.*)",
-            "dest": "lineBot/asgi.py"
+            "dest": "lineBot/lineBot/asgi.py"
         }
-    ],
-    "devCommand": "uvicorn lineBot.asgi:app",
-    "env": {
-        "APP_MODULE": "lineBot.asgi:app"
-    }
+    ]
 }
