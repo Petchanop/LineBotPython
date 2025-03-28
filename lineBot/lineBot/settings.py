@@ -128,8 +128,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MOUNT_DJANGO_APP = True
 
 # get channel_secret and channel_access_token from your environment variable
-CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET", "f4b6dc32fb7b0a3df96c58a4ed568650")
+CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
 CHANNEL_ACCESS_TOKEN = os.getenv(
     "LINE_CHANNEL_ACCESS_TOKEN",
-    "xqh4XTuhS+iDFd72xBvReEGspLmT7wiIbme2ySkH4EI3UrqDTbi6K6VPyD3lvEljM4XkX2BnsiOGc9/+2ysD8gZ1b6PL9urcPtbANBcIu/GS12PLDkN7hWFTVJqAdpPo2XBuvuY7Ud+rm85jKJeOCwdB04t89/1O/w1cDnyilFU=",
 )
