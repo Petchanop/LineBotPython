@@ -11,13 +11,13 @@ import os
 
 from django.apps import apps
 from django.conf import settings
-import lineBot.lineBot.settings as lineBot_settings 
+import lineBot.settings as lineBot_settings 
 from django.core.asgi import get_asgi_application
 from starlette.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'lineBot.lineBot.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'lineBot.settings')
 application = get_asgi_application()
 
 try:
@@ -36,8 +36,8 @@ app.add_middleware(
 )
 
 def init(app: FastAPI):
-    from lineBot.linenotify.routes.routes import router as linenotify_router
-    from lineBot.lineBot.urls import api_router
+    from linenotify.routes.routes import router as linenotify_router
+    from lineBot.urls import api_router
 
     api_router.include_router(linenotify_router)
     app.include_router(api_router)
