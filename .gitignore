@@ -5,3 +5,6 @@ lib
 lib64
 line-bot-sdk-python
 .env
+*/**/*wsgi.py
+*/**/*asgi.py
+lineBot/lineBot/*sgi.py
