@@ -8,3 +8,4 @@ line-bot-sdk-python
 */**/*wsgi.py
 */**/*asgi.py
 lineBot/lineBot/*sgi.py
+lineBot/staticfiles

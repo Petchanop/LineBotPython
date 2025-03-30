@@ -21,6 +21,7 @@ from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
 import requests
 from django.conf import settings
+from linenotify.models import Contact
 from rich import print
 
 
@@ -44,6 +45,17 @@ async def read_root():
     return {"Hello": "World"}
 
 
+async def get_or_create_user(user_id: str):
+    print("get or create user : " , user_id)
+    header = {"Authorization": f"Bearer {settings.CHANNEL_ACCESS_TOKEN}"}
+    url = f"https://api.line.me/v2/bot/profile/{user_id}"
+    response = requests.get(url, headers=header)
+    data = dict(json.loads(response._content.decode()))
+    print(data)
+    contact = Contact.objects.acreate(user_id=data["userId"], display_name=data["displayName"])
+    return contact
+
+
 @router.post("/webhook")
 async def handle_callback(request: Request):
 
@@ -54,18 +66,20 @@ async def handle_callback(request: Request):
     # get request body as text
     body = await request.body()
     body = body.decode()
-    print("body", body)
 
     try:
         events = parser.parse(body, signature)
     except InvalidSignatureError:
         raise HTTPException(status_code=400, detail="Invalid signature")
-
+    print(body)
     for event in events:
         if not isinstance(event, MessageEvent):
             continue
         if not isinstance(event.message, TextMessageContent):
             continue
+        print(event.source)
+        get_or_create_user(event.source.user_id)
+
 
         # result = await line_bot_api.reply_message(
         #     ReplyMessageRequest(
@@ -73,17 +87,14 @@ async def handle_callback(request: Request):
         #         messages=[TextMessage(text=event.message.text)],
         #     )
         # )
-
     return {"message": "OK", "status_code": status.HTTP_200_OK}
 
 
 @router.get("/profile/{userId}")
-async def get_proflie(userId: int):
+async def get_proflie(userId: str):
     # user_id = await request.body()['userId']
-    user_id = "Ufad02a204eaa97d49a885357c90b8c22"
     header = {"Authorization": f"Bearer {settings.CHANNEL_ACCESS_TOKEN}"}
-    print("header", header)
-    url = f"https://api.line.me/v2/bot/profile/{user_id}"
+    url = f"https://api.line.me/v2/bot/profile/{userId}"
     print('url', url)
     response = requests.get(url, headers=header)
     print(response.__dict__)
@@ -118,6 +129,3 @@ async def send_message(userId: int, request: Request):
 # curl -v -X GET https://api.line.me/v2/bot/profile/Ufad02a204eaa97d49a885357c90b8c22 \
 # -H 'Authorization: Bearer xqh4XTuhS+iDFd72xBvReEGspLmT7wiIbme2ySkH4EI3UrqDTbi6K6VPyD3lvEljM4XkX2BnsiOGc9/+2ysD8gZ1b6PL9urcPtbANBcIu/GS12PLDkN7hWFTVJqA
 # dpPo2XBuvuY7Ud+rm85jKJeOCwdB04t89/1O/w1cDnyilFU='
-
-if __name__ == "__main__":
-    app.run()
