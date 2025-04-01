@@ -33,7 +33,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = [".vercel.app", "localhost", "linebotpython-production.up.railway.app"]
 
-
 # Application definition
 
 INSTALLED_APPS = [

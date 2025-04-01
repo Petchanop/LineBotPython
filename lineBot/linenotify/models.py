@@ -6,3 +6,6 @@ class Contact(models.Model):
     line_id = models.CharField(null=True, blank=True)
     display_name = models.CharField(null=True, blank=True)
 
+    def __str__(self):
+        return self.line_id or "Unnamed Contact"
+
