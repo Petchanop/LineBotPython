@@ -45,7 +45,7 @@ async def read_root():
     return {"Hello": "World"}
 
 
-async def get_or_create_user(user_id: str):
+async def create_contact(user_id: str):
     print("get or create user : " , user_id)
     header = {"Authorization": f"Bearer {settings.CHANNEL_ACCESS_TOKEN}"}
     url = f"https://api.line.me/v2/bot/profile/{user_id}"
@@ -53,8 +53,12 @@ async def get_or_create_user(user_id: str):
     data = dict(json.loads(response._content.decode()))
     print(data)
     contact = Contact.objects.acreate(user_id=data["userId"], display_name=data["displayName"])
+    contact = {
+        "status_code": status.HTTP_201_CREATED,
+        "userId": data["userId"],
+        "displayName": data["displayName"]
+    }
     return contact
-
 
 @router.post("/webhook")
 async def handle_callback(request: Request):
@@ -62,7 +66,6 @@ async def handle_callback(request: Request):
     # hmac_sha256 = hmac.new(channel_secret.encode('utf-8'), channel_access_token.encode('utf-8'), hashlib.sha256).digest()
     signature = request.headers["X-Line-Signature"]
     # signature = base64.b64encode(hmac_sha256).decode('utf-8')
-
     # get request body as text
     body = await request.body()
     body = body.decode()
@@ -77,9 +80,20 @@ async def handle_callback(request: Request):
             continue
         if not isinstance(event.message, TextMessageContent):
             continue
+        print(event)
         print(event.source)
-        get_or_create_user(event.source.user_id)
-
+        try:
+            if event.source.user_id:
+                await Contact.objects.aget(user_id=event.source.user_id)
+        except Contact.DoesNotExist:
+            if event.type == "follow":
+                await create_contact(event.source.user_id)
+                result = await line_bot_api.reply_message(
+                    ReplyMessageRequest(
+                        reply_token=event.reply_token,
+                        messages=[TextMessage(text=f"Your contact has been created")],
+                    )
+                )
 
         # result = await line_bot_api.reply_message(
         #     ReplyMessageRequest(
@@ -92,10 +106,8 @@ async def handle_callback(request: Request):
 
 @router.get("/profile/{userId}")
 async def get_proflie(userId: str):
-    # user_id = await request.body()['userId']
     header = {"Authorization": f"Bearer {settings.CHANNEL_ACCESS_TOKEN}"}
     url = f"https://api.line.me/v2/bot/profile/{userId}"
-    print('url', url)
     response = requests.get(url, headers=header)
     print(response.__dict__)
     data = json.loads(response._content.decode())
