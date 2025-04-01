@@ -17,7 +17,7 @@ from starlette.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'lineBot.lineBot.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'lineBot.settings')
 application = get_asgi_application()
 
 try:
