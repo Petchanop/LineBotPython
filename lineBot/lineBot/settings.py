@@ -32,6 +32,7 @@ SECRET_KEY = os.getenv("DJANGO_KEY_SECRET")
 DEBUG = True
 
 ALLOWED_HOSTS = [".vercel.app", "localhost", "linebotpython-production.up.railway.app", ".ngrok-free.app"]
+CSRF_TRUSTED_ORIGINS = ['https://linebotpython-production.up.railway.app']
 
 # Application definition
 

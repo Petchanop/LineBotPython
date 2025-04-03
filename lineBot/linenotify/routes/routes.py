@@ -1,12 +1,5 @@
 import json
-from typing import Union
-
-import os
 import sys
-import hmac
-import hashlib
-import base64
-
 from fastapi import APIRouter, Request, Response, status, FastAPI, HTTPException
 
 from linebot.v3.webhook import WebhookParser
@@ -44,14 +37,13 @@ parser = WebhookParser(settings.CHANNEL_SECRET)
 async def read_root():
     return {"Hello": "World"}
 
-
 async def create_contact(user_id: str):
     print("get or create user : " , user_id)
     header = {"Authorization": f"Bearer {settings.CHANNEL_ACCESS_TOKEN}"}
     url = f"https://api.line.me/v2/bot/profile/{user_id}"
     response = requests.get(url, headers=header)
     data = dict(json.loads(response._content.decode()))
-    print(data)
+    # print(data)
     contact = Contact.objects.acreate(user_id=data["userId"], display_name=data["displayName"])
     contact = {
         "status_code": status.HTTP_201_CREATED,
@@ -74,14 +66,14 @@ async def handle_callback(request: Request):
         events = parser.parse(body, signature)
     except InvalidSignatureError:
         raise HTTPException(status_code=400, detail="Invalid signature")
-    print(body)
+    # print(body)
     for event in events:
         if not isinstance(event, MessageEvent):
             continue
         if not isinstance(event.message, TextMessageContent):
             continue
-        print(event)
-        print(event.source)
+        # print(event)
+        # print(event.source)
         try:
             if event.source.user_id:
                 await Contact.objects.aget(user_id=event.source.user_id)
@@ -91,16 +83,17 @@ async def handle_callback(request: Request):
                 result = await line_bot_api.reply_message(
                     ReplyMessageRequest(
                         reply_token=event.reply_token,
-                        messages=[TextMessage(text=f"Your contact has been created")],
+                        messages=[TextMessage(text="Your contact has been created")],
                     )
                 )
-
-        # result = await line_bot_api.reply_message(
-        #     ReplyMessageRequest(
-        #         reply_token=event.reply_token,
-        #         messages=[TextMessage(text=event.message.text)],
-        #     )
-        # )
+        if event.type == "message":
+            result = await line_bot_api.reply_message(
+                ReplyMessageRequest(
+                    reply_token=event.reply_token,
+                    messages=[TextMessage(text="May I help you?")],
+                )
+            )
+            print("result", result)
     return {"message": "OK", "status_code": status.HTTP_200_OK}
 
 
@@ -137,7 +130,4 @@ async def send_message(userId: int, request: Request):
     return { 'status_code': response.status_code }
 
 
-# # "userId":"Ufad02a204eaa97d49a885357c90b8c22"
-# curl -v -X GET https://api.line.me/v2/bot/profile/Ufad02a204eaa97d49a885357c90b8c22 \
-# -H 'Authorization: Bearer xqh4XTuhS+iDFd72xBvReEGspLmT7wiIbme2ySkH4EI3UrqDTbi6K6VPyD3lvEljM4XkX2BnsiOGc9/+2ysD8gZ1b6PL9urcPtbANBcIu/GS12PLDkN7hWFTVJqA
-# dpPo2XBuvuY7Ud+rm85jKJeOCwdB04t89/1O/w1cDnyilFU='
+
