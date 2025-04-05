@@ -43,8 +43,8 @@ async def create_contact(user_id: str):
     url = f"https://api.line.me/v2/bot/profile/{user_id}"
     response = requests.get(url, headers=header)
     data = dict(json.loads(response._content.decode()))
-    # print(data)
-    contact = Contact.objects.acreate(user_id=data["userId"], display_name=data["displayName"])
+    print(data)
+    contact = await Contact.objects.acreate(line_id=data["userId"], display_name=data["displayName"])
     contact = {
         "status_code": status.HTTP_201_CREATED,
         "userId": data["userId"],
@@ -65,35 +65,34 @@ async def handle_callback(request: Request):
     try:
         events = parser.parse(body, signature)
     except InvalidSignatureError:
-        raise HTTPException(status_code=400, detail="Invalid signature")
-    # print(body)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid signature")
     for event in events:
         if not isinstance(event, MessageEvent):
             continue
         if not isinstance(event.message, TextMessageContent):
             continue
-        # print(event)
-        # print(event.source)
         try:
             if event.source.user_id:
-                await Contact.objects.aget(user_id=event.source.user_id)
+                await Contact.objects.aget(line_id=event.source.user_id)
         except Contact.DoesNotExist:
+            print(event)
             if event.type == "follow":
                 await create_contact(event.source.user_id)
-                result = await line_bot_api.reply_message(
+                await line_bot_api.reply_message(
                     ReplyMessageRequest(
                         reply_token=event.reply_token,
                         messages=[TextMessage(text="Your contact has been created")],
                     )
                 )
-        if event.type == "message":
-            result = await line_bot_api.reply_message(
-                ReplyMessageRequest(
-                    reply_token=event.reply_token,
-                    messages=[TextMessage(text="May I help you?")],
-                )
-            )
-            print("result", result)
+            if event.type == "block":
+                await Contact.objects.adelete(line_id=event.source.user_id)
+    #     if event.type == "message":
+    #         result = await line_bot_api.reply_message(
+    #             ReplyMessageRequest(
+    #                 reply_token=event.reply_token,
+    #                 messages=[TextMessage(text="May I help you?")],
+    #             )
+    #         )
     return {"message": "OK", "status_code": status.HTTP_200_OK}
 
 
@@ -106,14 +105,35 @@ async def get_proflie(userId: str):
     data = json.loads(response._content.decode())
     return { 'status_code': response.status_code, 'data': data }
 
+@router.get("/profile/{lineId}")
+async def get_profile_by_lineId(lineId: str):
+    try:
+        user = Contact.objects.aget(line_id=lineId)
+    except Contact.DoesNotExist:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND ,detail="User not found")
+    return { 'status_code': status.HTTP_200_OK}
+
+
+from pydantic import BaseModel
+
+class UserData(BaseModel):
+    image_url: str
+    message: str
+
 @router.post("/send/message/{userId}")
-async def send_message(userId: int, request: Request):  
-    image_url = await request.body()['image_url']
-    message = await request.body()['message']
+async def send_message(userId: str, payload: UserData): 
+    print(payload)
+    image_url = payload.image_url
+    message = payload.message
     header = {"Authorization": f"Bearer {settings.CHANNEL_ACCESS_TOKEN}"}
+    try:
+        line_id = await Contact.objects.aget(user_id=userId)
+    except Contact.DoesNotExist:
+        raise HTTPException(status_code=404, detail="User not found")
+    print("line id", line_id)
     body = {
-        "to": userId,
-        "message":[
+        "to": line_id.line_id,
+        "messages":[
              {
                 "type": "image",
                 "originalContentUrl": image_url,
@@ -125,8 +145,10 @@ async def send_message(userId: int, request: Request):
             }
         ]
     }
+    print(body)
     url = f"https://api.line.me/v2/bot/message/push"
-    response = requests.post(url, header=header, body=body)
+    response = requests.post(url, headers=header, json=body)
+    print(response.__dict__)
     return { 'status_code': response.status_code }
 
 
