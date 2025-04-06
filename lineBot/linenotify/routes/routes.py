@@ -88,6 +88,22 @@ async def handle_callback(request: Request):
             case "unfollow":
                 contact = await Contact.objects.aget(line_id=event.source.user_id)
                 await contact.adelete()
+            case "join":
+                try:
+                    if event.source.group_id:
+                        await Contact.objects.aget(line_id=event.source.group_id)
+                        ReplyMessageRequest(
+                            reply_token=event.reply_token,
+                            messages=[TextMessage(text="Thank you for inviting me")],
+                        )
+                except Contact.DoesNotExist:
+                    await create_contact(event, event.source.group_id)
+            case "leave":
+                contact = await Contact.objects.aget(line_id=event.source.group_id)
+                await contact.adelete()
+            
+
+
 
     return {"message": "OK", "status_code": status.HTTP_200_OK}
 
