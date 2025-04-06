@@ -118,7 +118,7 @@ async def handle_callback(request: Request):
                             messages=[TextMessage(text="Thank you for inviting me")],
                         )
                 except Contact.DoesNotExist:
-                    await create_contact(event, event.source.group_id)
+                    await create_group_contact(event, event.source.group_id)
             case "leave":
                 contact = await Contact.objects.aget(line_id=event.source.group_id)
                 await contact.adelete()
