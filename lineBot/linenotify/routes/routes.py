@@ -37,6 +37,27 @@ parser = WebhookParser(settings.CHANNEL_SECRET)
 async def read_root():
     return {"Hello": "World"}
 
+async def create_group_contact(event, group_id: str):
+    header = {"Authorization": f"Bearer {settings.CHANNEL_ACCESS_TOKEN}"}
+    url = f"https://api.line.me/v2/bot/group/{group_id}/summary"
+    response = requests.get(url, headers=header)
+    data = dict(json.loads(response._content.decode()))
+    contact = await Contact.objects.acreate(
+        line_id=data["groupId"], display_name=data["groupName"]
+    )
+    contact = {
+        "status_code": status.HTTP_201_CREATED,
+        "userId": data["groupId"],
+        "displayName": data["groupName"],
+    }
+    await line_bot_api.reply_message(
+        ReplyMessageRequest(
+            reply_token=event.reply_token,
+            messages=[TextMessage(text="Your group contact has been created")],
+        )
+    )
+    return contact
+
 async def create_contact(event, user_id: str):
     header = {"Authorization": f"Bearer {settings.CHANNEL_ACCESS_TOKEN}"}
     url = f"https://api.line.me/v2/bot/profile/{user_id}"
@@ -101,10 +122,6 @@ async def handle_callback(request: Request):
             case "leave":
                 contact = await Contact.objects.aget(line_id=event.source.group_id)
                 await contact.adelete()
-            
-
-
-
     return {"message": "OK", "status_code": status.HTTP_200_OK}
 
 
