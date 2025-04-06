@@ -37,62 +37,57 @@ parser = WebhookParser(settings.CHANNEL_SECRET)
 async def read_root():
     return {"Hello": "World"}
 
-async def create_contact(user_id: str):
-    print("get or create user : " , user_id)
+async def create_contact(event, user_id: str):
     header = {"Authorization": f"Bearer {settings.CHANNEL_ACCESS_TOKEN}"}
     url = f"https://api.line.me/v2/bot/profile/{user_id}"
     response = requests.get(url, headers=header)
     data = dict(json.loads(response._content.decode()))
-    print(data)
-    contact = await Contact.objects.acreate(line_id=data["userId"], display_name=data["displayName"])
+    contact = await Contact.objects.acreate(
+        line_id=data["userId"], display_name=data["displayName"]
+    )
     contact = {
         "status_code": status.HTTP_201_CREATED,
         "userId": data["userId"],
-        "displayName": data["displayName"]
+        "displayName": data["displayName"],
     }
+    await line_bot_api.reply_message(
+        ReplyMessageRequest(
+            reply_token=event.reply_token,
+            messages=[TextMessage(text="Your contact has been created")],
+        )
+    )
     return contact
+
 
 @router.post("/webhook")
 async def handle_callback(request: Request):
 
-    # hmac_sha256 = hmac.new(channel_secret.encode('utf-8'), channel_access_token.encode('utf-8'), hashlib.sha256).digest()
     signature = request.headers["X-Line-Signature"]
-    # signature = base64.b64encode(hmac_sha256).decode('utf-8')
-    # get request body as text
     body = await request.body()
     body = body.decode()
 
     try:
         events = parser.parse(body, signature)
     except InvalidSignatureError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid signature")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Invalid signature"
+        )
     for event in events:
-        if not isinstance(event, MessageEvent):
-            continue
-        if not isinstance(event.message, TextMessageContent):
-            continue
-        try:
-            if event.source.user_id:
-                await Contact.objects.aget(line_id=event.source.user_id)
-        except Contact.DoesNotExist:
-            print(event)
-            if event.type == "follow":
-                await create_contact(event.source.user_id)
-                await line_bot_api.reply_message(
-                    ReplyMessageRequest(
-                        reply_token=event.reply_token,
-                        messages=[TextMessage(text="Your contact has been created")],
-                    )
-                )
-            if event.type == "block":
-                await Contact.objects.adelete(line_id=event.source.user_id)
-    #     if event.type == "message":
-    #         result = await line_bot_api.reply_message(
-    #             ReplyMessageRequest(
-    #                 reply_token=event.reply_token,
-    #                 messages=[TextMessage(text="May I help you?")],
-    #             )
-    #         )
+        match event.type:
+            case "follow":
+                try:
+                    if event.source.user_id:
+                        await Contact.objects.aget(line_id=event.source.user_id)
+                        ReplyMessageRequest(
+                            reply_token=event.reply_token,
+                            messages=[TextMessage(text="May I help you?")],
+                        )
+                except Contact.DoesNotExist:
+                    await create_contact(event, event.source.user_id)
+            case "unfollow":
+                contact = await Contact.objects.aget(line_id=event.source.user_id)
+                await contact.adelete()
+
     return {"message": "OK", "status_code": status.HTTP_200_OK}
 
 
@@ -101,55 +96,57 @@ async def get_proflie(userId: str):
     header = {"Authorization": f"Bearer {settings.CHANNEL_ACCESS_TOKEN}"}
     url = f"https://api.line.me/v2/bot/profile/{userId}"
     response = requests.get(url, headers=header)
-    print(response.__dict__)
     data = json.loads(response._content.decode())
-    return { 'status_code': response.status_code, 'data': data }
+    return {"status_code": response.status_code, "data": data}
+
 
 @router.get("/profile/{lineId}")
 async def get_profile_by_lineId(lineId: str):
     try:
         user = Contact.objects.aget(line_id=lineId)
     except Contact.DoesNotExist:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND ,detail="User not found")
-    return { 'status_code': status.HTTP_200_OK}
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+    return {"status_code": status.HTTP_200_OK}
 
 
 from pydantic import BaseModel
+
 
 class UserData(BaseModel):
     image_url: str
     message: str
 
 @router.post("/send/message/{userId}")
-async def send_message(userId: str, payload: UserData): 
-    print(payload)
+async def send_message(userId: str, payload: UserData):
     image_url = payload.image_url
     message = payload.message
     header = {"Authorization": f"Bearer {settings.CHANNEL_ACCESS_TOKEN}"}
     try:
-        line_id = await Contact.objects.aget(user_id=userId)
+        line_object = await Contact.objects.aget(user_id=userId)
     except Contact.DoesNotExist:
         raise HTTPException(status_code=404, detail="User not found")
-    print("line id", line_id)
     body = {
-        "to": line_id.line_id,
-        "messages":[
-             {
+        "to": line_object.line_id,
+        "messages": [
+            {
                 "type": "image",
                 "originalContentUrl": image_url,
-                "previewImageUrl": image_url
+                "previewImageUrl": image_url,
             },
             {
                 "type": "text",
                 "text": message,
-            }
-        ]
+            },
+       
+        ],
     }
-    print(body)
+    if line_object.message:
+        body["messages"].append({
+                "type": "text",
+                "text": line_object.message
+            })
     url = f"https://api.line.me/v2/bot/message/push"
     response = requests.post(url, headers=header, json=body)
-    print(response.__dict__)
-    return { 'status_code': response.status_code }
-
-
-
+    return {"status_code": response.status_code}
