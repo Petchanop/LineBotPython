@@ -73,6 +73,7 @@ async def handle_callback(request: Request):
             status_code=status.HTTP_404_NOT_FOUND, detail="Invalid signature"
         )
     for event in events:
+        print(event)
         match event.type:
             case "follow":
                 try:
