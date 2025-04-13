@@ -182,5 +182,6 @@ async def send_message(userId: str, payload: UserData):
                 "text": line_object.message
             })
     url = f"https://api.line.me/v2/bot/message/push"
+    print(body)
     response = requests.post(url, headers=header, json=body)
     return {"status_code": response.status_code}
