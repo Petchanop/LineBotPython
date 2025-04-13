@@ -15,6 +15,8 @@ from linebot.v3.webhooks import MessageEvent, TextMessageContent
 import requests
 from django.conf import settings
 from linenotify.models import Contact
+from urllib.parse import quote
+
 from rich import print
 
 
@@ -154,8 +156,8 @@ class UserData(BaseModel):
 
 @router.post("/send/message/{userId}")
 async def send_message(userId: str, payload: UserData):
-    print("image url", payload.image_url)
-    image_url = payload.image_url
+    print("image url", quote(payload.image_url))
+    image_url = quote(payload.image_url)
     message = payload.message
     header = {"Authorization": f"Bearer {settings.CHANNEL_ACCESS_TOKEN}"}
     try:
@@ -183,6 +185,5 @@ async def send_message(userId: str, payload: UserData):
                 "text": line_object.message
             })
     url = f"https://api.line.me/v2/bot/message/push"
-    print(body)
     response = requests.post(url, headers=header, json=body)
     return {"status_code": response.status_code}
