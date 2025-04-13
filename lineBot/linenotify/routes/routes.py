@@ -154,6 +154,7 @@ class UserData(BaseModel):
 
 @router.post("/send/message/{userId}")
 async def send_message(userId: str, payload: UserData):
+    print("image url", payload.image_url)
     image_url = payload.image_url
     message = payload.message
     header = {"Authorization": f"Bearer {settings.CHANNEL_ACCESS_TOKEN}"}
