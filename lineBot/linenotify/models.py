@@ -4,6 +4,7 @@ from django.db import models
 class Contact(models.Model):
     user_id = models.CharField(null=True, blank=True)
     line_id = models.CharField(null=True, blank=True)
+    whats_app_id = models.CharField(null=True, blank=True)
     display_name = models.CharField(null=True, blank=True)
     message = models.TextField(null=True, blank=True)
 

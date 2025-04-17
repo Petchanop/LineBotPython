@@ -1,6 +1,6 @@
 import json
 import sys
-from fastapi import APIRouter, Request, Response, status, FastAPI, HTTPException
+from fastapi import APIRouter, Request, status, HTTPException
 
 from linebot.v3.webhook import WebhookParser
 from linebot.v3.messaging import (
@@ -11,11 +11,11 @@ from linebot.v3.messaging import (
     TextMessage,
 )
 from linebot.v3.exceptions import InvalidSignatureError
-from linebot.v3.webhooks import MessageEvent, TextMessageContent
 import requests
 from django.conf import settings
 from linenotify.models import Contact
 from urllib.parse import quote
+import pywhatkit
 
 from rich import print
 
@@ -160,29 +160,41 @@ async def send_message(userId: str, payload: UserData):
     message = payload.message
     header = {"Authorization": f"Bearer {settings.CHANNEL_ACCESS_TOKEN}"}
     try:
-        line_object = await Contact.objects.aget(user_id=userId)
+        contact_object = await Contact.objects.aget(user_id=userId)
     except Contact.DoesNotExist:
         raise HTTPException(status_code=404, detail="User not found")
-    body = {
-        "to": line_object.line_id,
-        "messages": [
-            {
-                "type": "image",
-                "originalContentUrl": image_url,
-                "previewImageUrl": image_url,
+    if contact_object.line_id:
+        body = {
+            "to": contact_object.line_id,
+            "messages": [
+                {
+                    "type": "image",
+                    "originalContentUrl": image_url,
+                    "previewImageUrl": image_url,
+                },
+                {
+                    "type": "text",
+                    "text": message,
+                },
+        
+            ],
+        }
+        if contact_object.message:
+            body["messages"].append({
+                    "type": "text",
+                    "text": contact_object.message
+                })
+        url = f"https://api.line.me/v2/bot/message/push"
+        response = requests.post(url, headers=header, json=body)
+    if contact_object.whats_app_id:
+        body = {
+            "messaging_product": "whatsapp",
+            "to": contact_object.whats_app_id,
+            "type": "image",
+            "image": {
+                "link": image_url,
+                "caption": message,
             },
-            {
-                "type": "text",
-                "text": message,
-            },
-       
-        ],
-    }
-    if line_object.message:
-        body["messages"].append({
-                "type": "text",
-                "text": line_object.message
-            })
-    url = f"https://api.line.me/v2/bot/message/push"
-    response = requests.post(url, headers=header, json=body)
+        }
+        pywhatkit.sendwhat_image(contact_object.whats_app_id, image_url, contact_object.message)
     return {"status_code": response.status_code}
