@@ -53,6 +53,7 @@ PyScreeze==1.0.1
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 python-multipart==0.0.20
+python-xlib==0.33
 python3-xlib==0.15
 pytweening==1.2.0
 pywhatkit==5.4
