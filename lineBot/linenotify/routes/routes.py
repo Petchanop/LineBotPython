@@ -15,8 +15,8 @@ import requests
 from django.conf import settings
 from linenotify.models import Contact
 from urllib.parse import quote
-from pywhatkit_alt.whatsapp import send_whatsapp_message
-# import pywhatkit
+from datetime import datetime, timedelta
+from twilio.rest import Client
 
 from rich import print
 
@@ -34,7 +34,7 @@ router = APIRouter(tags=["linenotify"])
 async_api_client = AsyncApiClient(configuration)
 line_bot_api = AsyncMessagingApi(async_api_client)
 parser = WebhookParser(settings.CHANNEL_SECRET)
-
+client = Client(settings.WHATSAPP_TOKEN, settings.WHATSAPP_NUMBER)
 
 @router.get("/")
 async def read_root():
@@ -128,6 +128,11 @@ async def handle_callback(request: Request):
     return {"message": "OK", "status_code": status.HTTP_200_OK}
 
 
+@router.post("/whatsapp")
+async def handle_whatsapp_callback(request: Request):
+    print(request.__dict__)
+    return {"message": "OK", "status_code": status.HTTP_200_OK}
+
 @router.get("/profile/{userId}")
 async def get_proflie(userId: str):
     header = {"Authorization": f"Bearer {settings.CHANNEL_ACCESS_TOKEN}"}
@@ -160,6 +165,9 @@ async def send_message(userId: str, payload: UserData):
     image_url = payload.image_url
     message = payload.message
     header = {"Authorization": f"Bearer {settings.CHANNEL_ACCESS_TOKEN}"}
+    now = datetime.now() + timedelta(minutes=1)
+    hr = now.hour
+    min = now.minute 
     try:
         contact_object = await Contact.objects.aget(user_id=userId)
     except Contact.DoesNotExist:
@@ -188,7 +196,9 @@ async def send_message(userId: str, payload: UserData):
         url = f"https://api.line.me/v2/bot/message/push"
         response = requests.post(url, headers=header, json=body)
     if contact_object.whats_app_id:
-        # pass
-        send_whatsapp_message(contact_object.whats_app_id, image_url)
-        send_whatsapp_message(contact_object.whats_app_id, contact_object.message)
-    return {"status_code": response.status_code}
+        message = client.messages.create(
+            body=f"{image_url}\n{message}\n{contact_object.message}",
+            from_=f"whatsapp:{settings.TWILLO_SANDBOX}",
+            to=f"whatsapp:{contact_object.whats_app_id}",
+        )
+    return {"status_code": 200}

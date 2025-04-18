@@ -144,3 +144,7 @@ MOUNT_DJANGO_APP = True
 # get channel_secret and channel_access_token from your environment variable
 CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
 CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
+WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN")
+WHATSAPP_NUMBER = os.getenv("WHATSAPP_NUMBER")
+TWILLO_SANDBOX= os.getenv("TWILLO_SANDBOX")
+
