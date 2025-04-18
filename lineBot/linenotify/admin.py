@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import Contact
 
 class ContactAdmin(admin.ModelAdmin):
-    list_display = ['user_id', 'line_id', 'display_name', 'message']
+    list_display = ['user_id',  'line_id', 'whats_app_id', 'display_name', 'message']
 
 admin.site.register(Contact, ContactAdmin)
 

@@ -15,7 +15,8 @@ import requests
 from django.conf import settings
 from linenotify.models import Contact
 from urllib.parse import quote
-import pywhatkit
+from pywhatkit_alt.whatsapp import send_whatsapp_message
+# import pywhatkit
 
 from rich import print
 
@@ -187,14 +188,7 @@ async def send_message(userId: str, payload: UserData):
         url = f"https://api.line.me/v2/bot/message/push"
         response = requests.post(url, headers=header, json=body)
     if contact_object.whats_app_id:
-        body = {
-            "messaging_product": "whatsapp",
-            "to": contact_object.whats_app_id,
-            "type": "image",
-            "image": {
-                "link": image_url,
-                "caption": message,
-            },
-        }
-        pywhatkit.sendwhat_image(contact_object.whats_app_id, image_url, contact_object.message)
+        # pass
+        send_whatsapp_message(contact_object.whats_app_id, image_url)
+        send_whatsapp_message(contact_object.whats_app_id, contact_object.message)
     return {"status_code": response.status_code}
