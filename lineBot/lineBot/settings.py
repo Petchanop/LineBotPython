@@ -31,7 +31,7 @@ SECRET_KEY = os.getenv("DJANGO_KEY_SECRET")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [".vercel.app", "localhost", "linebotpython-production.up.railway.app", ".ngrok-free.app"]
+ALLOWED_HOSTS = [".vercel.app", "localhost", "linebotpython-production.up.railway.app", ".ngrok-free.app", "127.0.0.1"]
 CSRF_TRUSTED_ORIGINS = ['https://linebotpython-production.up.railway.app']
 
 # Application definition
@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "linenotify"
+    "linenotify",
+    "task"
 ]
 
 MIDDLEWARE = [

@@ -37,9 +37,12 @@ app.add_middleware(
 
 def init(app: FastAPI):
     from linenotify.routes.routes import router as linenotify_router
+    from task.views import router as task_router
     from lineBot.urls import api_router
 
     api_router.include_router(linenotify_router)
+    api_router.include_router(task_router)
+
     app.include_router(api_router)
 
     if settings.MOUNT_DJANGO_APP:

@@ -13,8 +13,7 @@ from linebot.v3.messaging import (
 from linebot.v3.exceptions import InvalidSignatureError
 import requests
 from django.conf import settings
-from linenotify.models import Contact
-from urllib.parse import quote
+from linenotify.models import Contact, ResponseUserData, UserData
 from datetime import datetime, timedelta
 from twilio.rest import Client
 
@@ -142,23 +141,16 @@ async def get_proflie(userId: str):
     return {"status_code": response.status_code, "data": data}
 
 
-@router.get("/profile/{lineId}")
+@router.get("/profile/line/{lineId}", response_model=ResponseUserData)
 async def get_profile_by_lineId(lineId: str):
     try:
-        user = Contact.objects.aget(line_id=lineId)
+        user = await Contact.objects.aget(user_id=lineId)
     except Contact.DoesNotExist:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
-    return {"status_code": status.HTTP_200_OK}
-
-
-from pydantic import BaseModel
-
-
-class UserData(BaseModel):
-    image_url: str
-    message: str
+    print(user.__dict__)
+    return {"status_code": status.HTTP_200_OK, "data": ResponseUserData(**user.__dict__)}
 
 @router.post("/send/message/{userId}")
 async def send_message(userId: str, payload: UserData):
@@ -170,6 +162,11 @@ async def send_message(userId: str, payload: UserData):
     min = now.minute 
     try:
         contact_object = await Contact.objects.aget(user_id=userId)
+        if contact_object.enabled == False:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User is not enabled",
+            )
     except Contact.DoesNotExist:
         raise HTTPException(status_code=404, detail="User not found")
     if contact_object.line_id:
@@ -197,8 +194,9 @@ async def send_message(userId: str, payload: UserData):
         response = requests.post(url, headers=header, json=body)
     if contact_object.whats_app_id:
         message = client.messages.create(
-            body=f"{image_url}\n{message}\n{contact_object.message}",
+            body=f"{message}\n{contact_object.message}",
             from_=f"whatsapp:{settings.TWILLO_SANDBOX}",
             to=f"whatsapp:{contact_object.whats_app_id}",
         )
-    return {"status_code": 200}
+        print(message.__dict__)
+    return {"status_code": 200, "data": response.json()}

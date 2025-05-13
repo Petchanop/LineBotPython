@@ -9,3 +9,5 @@ line-bot-sdk-python
 */**/*asgi.py
 lineBot/lineBot/*sgi.py
 lineBot/staticfiles
+yt*
+_yt*
