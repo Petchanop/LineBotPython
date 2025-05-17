@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from lineBot.task.models import Task
+from task.models import Task
 
 # Register your models here.
 
