@@ -17,7 +17,16 @@ class Task(models.Model):
     def __str__(self):
         return self.name
     
-class createTask(BaseModel):
+class createTaskModel(BaseModel):
     contact_id: int
     name: str
     description: str
+
+class taskResponseModel(BaseModel):
+    status_code: int
+    id: str
+    contact_id: str
+    name: str
+    description: str
+    created_at: datetime
+    updated_at: datetime

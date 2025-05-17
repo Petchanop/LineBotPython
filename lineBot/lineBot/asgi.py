@@ -36,7 +36,7 @@ app.add_middleware(
 )
 
 def init(app: FastAPI):
-    from linenotify.routes.routes import router as linenotify_router
+    from linenotify.views import router as linenotify_router
     from task.views import router as task_router
     from lineBot.urls import api_router
 
