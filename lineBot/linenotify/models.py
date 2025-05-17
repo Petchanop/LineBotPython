@@ -21,7 +21,6 @@ class ResponseUserData(BaseModel):
 
 # Create your models here.
 class Contact(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user_id = models.CharField(null=True, blank=True)
     line_id = models.CharField(null=True, blank=True)
     whats_app_id = models.CharField(null=True, blank=True)
