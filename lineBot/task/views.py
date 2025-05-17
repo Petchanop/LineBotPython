@@ -9,7 +9,7 @@ from task.models import Task, createTaskModel, taskResponseModel
 
 router = APIRouter(prefix="/task", tags=["task"])
 
-@router.get("/{userId}", reponse_model=[taskResponseModel])
+@router.get("/{userId}", response_model=[taskResponseModel])
 async def get_task_by_contact(userId: str):
     try:
         contact_object = await Contact.objects.aget(user_id=userId)
