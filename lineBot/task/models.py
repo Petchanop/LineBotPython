@@ -18,7 +18,6 @@ class Task(models.Model):
         return self.name
     
 class createTaskModel(BaseModel):
-    contact_id: int
     name: str
     description: str
 
@@ -30,3 +29,4 @@ class taskResponseModel(BaseModel):
     description: str
     created_at: datetime
     updated_at: datetime
+
