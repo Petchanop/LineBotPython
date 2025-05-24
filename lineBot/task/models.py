@@ -10,7 +10,7 @@ class Task(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     contact_id = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='tasks')
     name = models.CharField('Task_name', max_length=255)
-    description = models.TextField()
+    description = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
