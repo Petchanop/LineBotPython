@@ -80,7 +80,12 @@ WSGI_APPLICATION = "lineBot.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+#postgresql://postgres:OumYWAQVkNWCGdCmlPDKYKfhkxXPLREq@postgres.railway.internal:5432/railway
 if os.getenv("DATABASE_URL"):
+    print("Postgres URL found")
+    print("Using DATABASE_URL")
+    print(os.getenv("DATABASE_URL"))
+    print("Using DATABASE_URL")
     DATABASES = {"default": dj_database_url.config(default=os.getenv("DATABASE_URL"))}
 else:
     DATABASES = {
