@@ -73,3 +73,22 @@ async def create_contact_task(userId: str, payload: createTaskModel):
             updated_at=task_object.updated_at
         )
     return response 
+
+@router.delete("/{userId}/{taskName}", response_model=taskResponseModel)
+async def stop_task(userId: str, taskName: str):
+    try:
+        task_object = await Task.objects.prefetch_related("contact_id").aget(name=taskName)
+        if task_object:
+            await task_object.delete()
+            response = taskResponseModel(
+                status_code=status.HTTP_200_OK,
+                id=task_object.id.__str__(),
+                contact_id=task_object.contact_id.__str__(),
+                name=task_object.name,
+                description=task_object.description,
+                created_at=task_object.created_at,
+                updated_at=task_object.updated_at
+            )
+    except Task.DoesNotExist:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+    return response
