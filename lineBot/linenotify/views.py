@@ -143,8 +143,7 @@ async def get_proflie(userId: str):
     data = json.loads(response._content.decode())
     return {"status_code": response.status_code, "data": data}
 
-
-@router.get("/profile/line/{lineId}", response_model=ResponseUserData)
+@router.get("/profile/line/{lineId}", response_model={"status_code": int, "data": ResponseUserData})
 async def get_profile_by_lineId(lineId: str):
     try:
         user = await Contact.objects.aget(user_id=lineId)

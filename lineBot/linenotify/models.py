@@ -9,7 +9,6 @@ class UserData(BaseModel):
 
 #response model
 class ResponseUserData(BaseModel):
-    status_code: int
     id: int
     user_id: str
     line_id: str
