@@ -152,7 +152,17 @@ async def get_profile_by_lineId(lineId: str):
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
     print(user.__dict__)
-    return {"status_code": status.HTTP_200_OK, "data": ResponseUserData(**user.__dict__)}
+    user_data = ResponseUserData(
+        id=user.id,
+        user_id=user.user_id,
+        line_id=user.line_id,
+        whats_app_id=user.whats_app_id,
+        display_name=user.display_name,
+        message=user.message,
+        enabled=user.enabled,
+        task_limit=user.task_limit
+    )
+    return {"status_code": status.HTTP_200_OK, "data": user_data}
 
 @router.post("/send/message/{userId}")
 async def send_message(userId: str, payload: UserData):
