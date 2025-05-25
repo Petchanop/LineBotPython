@@ -9,12 +9,12 @@ class UserData(BaseModel):
 
 #response model
 class ResponseUserData(BaseModel):
-    id: int
-    user_id: str
-    line_id: str
-    whats_app_id: str
-    display_name: str
-    message: str
+    id: int | None
+    user_id: str | None
+    line_id: str | None
+    whats_app_id: str | None
+    display_name: str | None
+    message: str | None
     enabled: bool
     task_limit: int | None
 
